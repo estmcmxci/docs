@@ -38,16 +38,11 @@ The URM implements four distinct resolution profiles:
 
 ### Local Development
 
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally:
+To preview documentation changes locally:
 
 ```bash
-npm i -g mint
-```
-
-Run the following command at the root of your documentation:
-
-```bash
-mint dev
+npm install
+npm run dev
 ```
 
 View your local preview at `http://localhost:3000`.
@@ -57,16 +52,12 @@ View your local preview at `http://localhost:3000`.
 To build the documentation for production:
 
 ```bash
-mint build
+npm run build
 ```
 
 ## Deployment
 
-This documentation is automatically deployed using Mintlify's GitHub integration. Changes pushed to the main branch are automatically deployed to production.
-
-### Manual Deployment
-
-Install our GitHub app from your [Mintlify dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to enable automatic deployments.
+This documentation is automatically deployed when changes are pushed to the main branch. The deployment process handles building and publishing the documentation site.
 
 ## Contributing
 
@@ -89,7 +80,6 @@ The Universal Resolver Matrix framework is developed at [eureka.etcetera](https:
 
 ### Resources
 
-- [Mintlify Documentation](https://mintlify.com/docs)
 - [ENS Documentation](https://docs.ens.domains)
 - [ENSIP Specifications](https://docs.ens.domains/ensip/)
 - [Universal Resolver Matrix Research](https://github.com/eurekaetcetera)
