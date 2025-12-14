@@ -1,69 +1,81 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Eureka",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#3204D4",
+    "light": "#6B46FF",
+    "dark": "#2503A0"
   },
   "favicon": "/favicon.svg",
+  "fonts": {
+    "heading": {
+      "family": "IBM Plex Sans"
+    },
+    "body": {
+      "family": "IBM Plex Sans"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Overview",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Introduction",
             "pages": [
-              "index",
-              "quickstart",
-              "development"
+              "index"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Resolution Patterns",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "dnssec-pattern",
+              "evm-pattern",
+              "non-evm-pattern",
+              "webauthn-pattern"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "Guides",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Technical Specifications",
             "pages": [
-              "api-reference/introduction"
+              "dnssec-specification",
+              "evm-specification",
+              "non-evm-specification",
+              "webauthn-specification"
             ]
-          },
+          }
+        ]
+      },
+      {
+        "tab": "EVM Resolution",
+        "groups": [
           {
-            "group": "Endpoint examples",
-            "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
-            ]
+            "group": "ENSIP-19 Implementation",
+            "pages": []
+          }
+        ]
+      },
+      {
+        "tab": "Non-EVM Resolution",
+        "groups": [
+          {
+            "group": "Cross-Chain Identity",
+            "pages": []
+          }
+        ]
+      },
+      {
+        "tab": "WebAuthn Resolution",
+        "groups": [
+          {
+            "group": "Passkey Authentication",
+            "pages": []
           }
         ]
       }
@@ -71,33 +83,33 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
+          "anchor": "Eureka, Etcetera",
+          "href": "http://localhost:3001",
+          "icon": "home"
         },
         {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "ENS Documentation",
+          "href": "https://docs.ens.domains",
+          "icon": "book-open-cover"
         }
       ]
     }
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/eureka!!!.png",
+    "dark": "/eketc.png"
+  },
+  "background": {
+    "color": {
+      "light": "#E7E4DE",
+      "dark": "#000000"
+    }
   },
   "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "label": "Message",
+      "href": "mailto:contact@eureka.etcetera"
     }
   },
   "contextual": {
@@ -114,9 +126,8 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "x": "https://x.com/eurekaetcetera",
+      "github": "https://github.com/eurekaetcetera"
     }
   }
 }

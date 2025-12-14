@@ -1,0 +1,52 @@
+/* Custom styles to match card backgrounds with page background */
+
+/* Override card backgrounds in light mode - target all card variations */
+.card.bg-white,
+.card[class*="bg-white"],
+a.card[class*="bg-white"],
+div.card[class*="bg-white"],
+[class*="card"][class*="bg-white"] {
+  background-color: #E7E4DE !important;
+}
+
+/* Override card backgrounds in dark mode */
+.dark .card[class*="bg-background-dark"],
+.dark .card.bg-background-dark,
+.dark a.card[class*="bg-background-dark"],
+.dark div.card[class*="bg-background-dark"],
+.dark [class*="card"][class*="bg-background-dark"] {
+  background-color: #000000 !important;
+}
+
+/* Target cards with ring-2 and border classes */
+a.card.block.ring-2[class*="bg-white"],
+div.card.block.ring-2[class*="bg-white"] {
+  background-color: #E7E4DE !important;
+}
+
+.dark a.card.block.ring-2[class*="bg-background-dark"],
+.dark div.card.block.ring-2[class*="bg-background-dark"] {
+  background-color: #000000 !important;
+}
+
+/* Make navbar logo 50% bigger */
+.nav-logo {
+  height: 42px !important;
+}
+
+/* Replace Mintlify branding with custom copyright */
+a[href*="mintlify.com"]::after {
+  content: "© 2026 Eureka, Etcetera. All rights reserved";
+  font-size: inherit;
+  color: inherit;
+}
+
+a[href*="mintlify.com"] {
+  font-size: 0;
+  visibility: hidden;
+}
+
+a[href*="mintlify.com"]::after {
+  font-size: 0.875rem;
+  visibility: visible;
+}

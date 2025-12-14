@@ -1,97 +1,164 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Universal Resolver Matrix"
+description: "Systematic framework for mapping resolution pathways across blockchain namespaces and authentication methods"
 ---
 
-## Setting up
+<Note type="warning">
+**Research Documentation**: This site presents hypothetical implementations and research concepts for the Universal Resolver Matrix framework. Content represents educational explorations and may not reflect current or planned features of Ethereum Name Service (ENS) or related protocols.
+</Note>
 
-Get your documentation site up and running in minutes.
+## The Universal Resolver Matrix
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+The **Universal Resolver Matrix (URM)** is a comprehensive framework for implementing universal name resolution across diverse namespaces and ecosystems. It provides a systematic approach to mapping resolution pathways using four core dimensions: 
 
-## Make it yours
+- **Trust Model**, 
+- **Proof System**, 
+- **Rules & Lifecycle**, and 
+- **Verification Path**.
 
-Design a docs site that looks great and empowers your users.
+Built on Ethereum Name Service (ENS) infrastructure, the URM creates a unified identity resolution system that bridges traditional DNS, blockchain ecosystems, and modern authentication methods into a single, coherent framework.
+
+## Universal Resolution Framework
+
+The URM implements a consistent **resolution choreography** across all namespaces through a unified four-dimensional framework:
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant UniversalResolver
+    participant NamespaceResolver
+    participant Gateway
+    participant Namespace
+    participant Verifier
+
+    Client->>+UniversalResolver: resolve(name, callData)
+    UniversalResolver->>+NamespaceResolver: Route to appropriate resolver
+
+    alt Direct Onchain Resolution
+        NamespaceResolver->>NamespaceResolver: Read from contract storage
+        NamespaceResolver-->>UniversalResolver: Return resolved data
+    else Offchain Data Required
+        NamespaceResolver->>Client: OffchainLookup(urls, callData, callback, extraData)
+        Client->>+Gateway: HTTP GET/POST callData
+        Gateway->>+Namespace: Query namespace-specific data
+        Namespace-->>Gateway: Return raw data/proof
+        Gateway->>Gateway: Construct namespace proof bundle
+        Gateway-->>Client: Return proof bundle via CCIP-Read
+        Client->>+NamespaceResolver: ccipCallback(proofBundle, extraData)
+    end
+
+    NamespaceResolver->>+Verifier: verify(proofBundle, query)
+    Verifier->>Verifier: Validate using namespace trust model
+    Verifier-->>NamespaceResolver: (valid: true, canonicalData)
+    NamespaceResolver-->>UniversalResolver: Return verified result
+    UniversalResolver-->>Client: Final resolution result
+```
+
+<Note>
+  **Diagram Legend**: The conditional "alt" block shows two resolution strategies - direct onchain resolution for available data vs. CCIP-Read assisted resolution for cross-chain/namespace data fetching.
+</Note>
+
+## Core Resolution Profiles
 
 <Columns cols={2}>
   <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
+    title="DNSSEC Onchain Resolution"
+    icon="shield-check"
+    href="/dnssec-pattern"
   >
-    Edit your docs locally and preview them in real time.
+    Trustless DNS→ENS resolution via DNSSEC P-256 signatures validated onchain.
   </Card>
   <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
+    title="EVM Resolution"
+    icon="network-wired"
+    href="/evm-pattern"
   >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+    ENSIP-19 multichain primary names across EVM ecosystems.
   </Card>
   <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
+    title="Non-EVM Resolution"
+    icon="globe"
+    href="/non-evm-pattern"
   >
-    Auto-generate API documentation from OpenAPI specifications.
+    Extends ENSIP-19 to non-EVM blockchains (Cosmos, Solana, etc.)
+  </Card>
+  <Card
+    title="WebAuthn Resolution"
+    icon="key"
+    href="/webauthn-pattern"
+  >
+    Passkey-based ENS name control and authentication.
   </Card>
 </Columns>
 
-## Create beautiful pages
+## Framework Architecture
 
-Everything you need to create world-class documentation.
+### Four Core Dimensions
+
+The URM structures each resolution profile around four fundamental dimensions:
+
+1. **Trust Model** - Establishes the cryptographic and organizational trust foundations
+2. **Proof System** - Defines how proofs are generated, validated, and verified
+3. **Rules & Lifecycle** - Governs the creation, management, and expiration of names
+4. **Verification Path** - Maps the complete resolution pathway from query to result
+
+### Technical Specifications
+
+Each profile provides comprehensive technical references including:
+- Contract & namespace inventory
+- Deployment architecture considerations
+- Edge cases and client requirements
+- Implementation details and best practices
+
+## Getting Started
+
+<Steps>
+<Step title="Choose your resolution profile">
+  Select the appropriate URM profile based on your target blockchain ecosystem or authentication method.
+</Step>
+
+<Step title="Review the technical specification">
+  Study the complete implementation details, including trust models, proof systems, and verification paths.
+</Step>
+
+<Step title="Implement the resolver contracts">
+  Deploy the required smart contracts and integrate with ENS infrastructure.
+</Step>
+
+<Step title="Test and validate">
+  Ensure proper resolution across all specified pathways and handle edge cases appropriately.
+</Step>
+</Steps>
+
+## Technical Resources
 
 <Columns cols={2}>
   <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
+    title="ENSIP Specifications"
+    icon="file-contract"
+    href="https://docs.ens.domains/ensip/"
   >
-    Use MDX to style your docs pages.
+    Official ENS Improvement Proposals and technical standards.
   </Card>
   <Card
-    title="Code samples"
+    title="EIP-7951: P-256 Precompile"
     icon="code"
-    href="/essentials/code"
+    href="https://eips.ethereum.org/EIPS/eip-7951"
   >
-    Add sample code to demonstrate how to use your product.
+    Ethereum precompile for P-256 elliptic curve operations.
   </Card>
   <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
+    title="ENSIP-19: Multichain Names"
+    icon="link"
+    href="https://docs.ens.domains/ensip/19"
   >
-    Display images and other media.
+    Primary name resolution across multiple blockchains.
   </Card>
   <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
+    title="DNSSEC Algorithm 13"
+    icon="lock"
+    href="https://www.rfc-editor.org/rfc/rfc6605.html"
   >
-    Write once and reuse across your docs.
+    P-256 ECDSA signatures for DNSSEC validation.
   </Card>
 </Columns>
-
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
