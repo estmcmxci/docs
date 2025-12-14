@@ -18,8 +18,6 @@ This documentation covers the complete Universal Resolver Matrix framework:
 - **Non-EVM Specification**: Extended ENSIP-19 support for non-EVM blockchains
 - **WebAuthn Specification**: Passkey-based ENS name control and authentication
 
-### 🔗 API Reference
-Complete API documentation for integration and implementation
 
 ## Core Resolution Profiles
 
@@ -69,14 +67,6 @@ This documentation is automatically deployed when changes are pushed to the main
 
 ### Framework Development
 The Universal Resolver Matrix framework is developed at [eureka.etcetera](https://github.com/eurekaetcetera). See the main repository for implementation details.
-
-## Need Help?
-
-### Troubleshooting
-
-- **Dev environment not running**: Run `mint update` to ensure you have the latest CLI version
-- **404 errors**: Ensure you're running from a directory with a valid `docs.json`
-- **Build failures**: Check that all required dependencies are installed
 
 ### Resources
 
