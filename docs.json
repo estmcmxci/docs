@@ -108,8 +108,8 @@
   "navbar": {
     "primary": {
       "type": "button",
-      "label": "Message",
-      "href": "mailto:contact@eureka.etcetera"
+      "label": "email inbox@eketc.co",
+      "href": "mailto:inbox@eketc.co"
     }
   },
   "contextual": {
@@ -126,7 +126,7 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/eurekaetcetera",
+      "website": "https://eketc.co",
       "github": "https://github.com/eurekaetcetera"
     }
   }
