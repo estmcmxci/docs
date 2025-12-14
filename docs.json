@@ -97,7 +97,8 @@
   },
   "logo": {
     "light": "/images/e!.png",
-    "dark": "/images/ee.png"
+    "dark": "/images/ee.png",
+    "href": "https://www.eketc.co"
   },
   "background": {
     "color": {
