@@ -30,10 +30,10 @@
           {
             "group": "Resolution Patterns",
             "pages": [
-              "dnssec-pattern",
-              "evm-pattern",
-              "non-evm-pattern",
-              "webauthn-pattern"
+              "patterns/dnssec-pattern",
+              "patterns/evm-pattern",
+              "patterns/non-evm-pattern",
+              "patterns/webauthn-pattern"
             ]
           }
         ]
@@ -44,10 +44,10 @@
           {
             "group": "Technical Specifications",
             "pages": [
-              "dnssec-specification",
-              "evm-specification",
-              "non-evm-specification",
-              "webauthn-specification"
+              "specifications/dnssec-specification",
+              "specifications/evm-specification",
+              "specifications/non-evm-specification",
+              "specifications/webauthn-specification"
             ]
           }
         ]
@@ -96,8 +96,8 @@
     }
   },
   "logo": {
-    "light": "/e.png",
-    "dark": "/eketc.png"
+    "light": "/images/e.png",
+    "dark": "/images/eketc.png"
   },
   "background": {
     "color": {
