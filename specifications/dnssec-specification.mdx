@@ -98,7 +98,7 @@ Our working implementation is deployed on Sepolia testnet:
 - DNS Name: `_ens.eketc.co` (TXT record: `"ens_name=dnssec.eth"`)
 - ENS Name: `dnssec.eth` (Sepolia)
 - Trust Anchor: `eketc.co` KSK (keyTag=2371, Algorithm 13)
-- Gateway: `https://johnie-unpickable-nilda.ngrok-free.dev/ccip-read`
+- Gateway: `https://gateway.eketc.co/ccip-read`
 
 #### 2.4.2. Contract Inventory (2-Contract Pattern)
 
@@ -578,7 +578,7 @@ DNSSEC onchain resolution requires deploying two new contracts while leveraging 
 **Working Example:**
 - DNS Name: `_ens.eketc.co` → ENS Name: `dnssec.eth`
 - Trust Anchor: `eketc.co` KSK (keyTag=2371, Algorithm 13)
-- Gateway: `https://johnie-unpickable-nilda.ngrok-free.dev/ccip-read`
+- Gateway: `https://gateway.eketc.co/ccip-read`
 
 **Gas Costs (Sepolia):**
 - DNSSEC Verification: ~311,588 gas (&lt; $0.01)
@@ -965,7 +965,7 @@ verifier.setPinnedTrustAnchor(
 **Working Example:**
 - DNS Name: `_ens.eketc.co` → ENS Name: `dnssec.eth`
 - Trust Anchor: `eketc.co` KSK (keyTag=2371, Algorithm 13)
-- Gateway: `https://johnie-unpickable-nilda.ngrok-free.dev/ccip-read`
+- Gateway: `https://gateway.eketc.co/ccip-read`
 
 **Deployment Verification:**
 ```bash
