@@ -934,8 +934,8 @@ function setPinnedTrustAnchor(
 // Usage in deployment script
 verifier.setPinnedTrustAnchor(
     hex"05656b65746302636f00", // eketc.co in wire format
-    0x99db2cc14cabdc33d6d77da63a2f15f71112584f234e8d1dc428e39e8a4a97e1, // pubX
-    0xaa271a555dc90701e17e2a4c4b6f120b7c32d44f4ac02bd894cf2d4be7778a19, // pubY
+    uint256(0x99db2cc14cabdc33d6d77da63a2f15f71112584f234e8d1dc428e39e8a4a97e1), // pubX
+    uint256(0xaa271a555dc90701e17e2a4c4b6f120b7c32d44f4ac02bd894cf2d4be7778a19), // pubY
     2371 // keyTag
 );
 ```
