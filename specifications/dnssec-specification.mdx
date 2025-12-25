@@ -6,7 +6,7 @@ icon: "shield-check"
 
 
 <Note type="info">
-**Working Implementation**: This document describes the actual deployed DNSSEC P-256 resolver system on Sepolia, with working contracts and verified proofs.
+**Working Implementation**: This document describes three complementary DNSSEC P-256 demonstration projects deployed on Sepolia, all leveraging the EIP-7951 P-256 precompile. Working implementations are available in the [`dnssec-solutions`](../../dnssec-solutions) repository.
 </Note>
 
 ## 1. Introduction
@@ -15,7 +15,17 @@ icon: "shield-check"
 
 This document provides a comprehensive technical reference for implementing DNSSEC P-256 (Algorithm 13) as a profile in the Universal Resolver Matrix (URM), expanding the normative specification from the proposed **ENSIP-XX** (Ethereum Name Service Improvement Proposal for standardizing DNSSEC onchain resolution).
 
-### 1.2. Universal Resolver Matrix Framework
+### 1.2. Demonstration Projects
+
+This specification is supported by three demonstration projects in the [`dnssec-solutions`](../../dnssec-solutions) repository that showcase different approaches to DNSSEC verification:
+
+1. **Gasless DNSSEC Resolution** - CCIP-Read (EIP-3668) implementation with Profile A trust model (pinned zone KSK)
+2. **Onchain DNS Import** - ENS-style DNSSEC oracle with Profile B trust model (IANA root DS chain)
+3. **DNS Claiming** - ENS registrar contracts for claiming DNS names using DNSSEC proofs
+
+All three projects leverage the **EIP-7951 P-256 precompile** for efficient Algorithm 13 signature verification, achieving ~94% gas savings compared to Solidity implementations.
+
+### 1.3. Universal Resolver Matrix Framework
 
 The Universal Resolver Matrix (URM) is a systematic framework for mapping resolution pathways across namespaces using four core dimensions:
 
@@ -39,23 +49,33 @@ ENS uses **Algorithm 13 (ECDSAP256SHA256)** for DNSSEC verification, enabling tr
 
 This validation relies on Ethereum's P-256 precompile (EIP-7951) available on both L1 and Namechain for efficient onchain signature verification.
 
-#### Trust Model Choice: Profile A (Pinned Zone KSK)
+#### Trust Model Choices: Profile A vs Profile B
 
-Our implementation uses **Profile A trust model** with a pinned zone KSK as the trust anchor, rather than IANA root trust. This design choice was made for the following reasons:
+We provide implementations for both trust models:
 
-**Why Profile A over IANA Root Trust:**
+**Profile A (Pinned Zone KSK)** - Used by **Gasless DNSSEC Resolution**:
+- **Trust Anchor**: Pinned zone KSK (e.g., `eketc.co` KSK with keyTag=2371)
+- **Validation**: Verifies domain DNSKEY → TXT record chain only
+- **Advantages**: Faster verification, immediate deployment, no dependency on root/TLD Algorithm 13 adoption
+- **Limitation**: Does not verify parent zone chain (e.g., `.co` → root)
+- **Use Case**: Proof-of-concept, gasless resolution via CCIP-Read
+
+**Profile B (IANA Root DS Chain)** - Used by **Onchain DNS Import** and **DNS Claiming**:
+- **Trust Anchor**: IANA root zone DNSKEY records
+- **Validation**: Full DS (Delegation Signer) chain from root → TLD → domain
+- **Advantages**: Complete trust chain validation, ENS-compatible, maximum security
+- **Requirements**: Root/TLD zones must use Algorithm 13 or hybrid verification approaches
+- **Use Case**: Full on-chain oracle, ENS registrar integration
+
+**Why Both Models:**
 1. **DNS root zone uses RSA (Algorithm 8)**, not ECDSA-P256 (Algorithm 13)
 2. **Most TLDs use RSA**, not Algorithm 13 (only `.fr` is known to use Algorithm 13)
-3. **PoC Focus**: We wanted to demonstrate complete Algorithm 13 verification as a proof-of-concept
-4. **Practical Deployment**: Profile A allows immediate deployment without waiting for root/TLD adoption of Algorithm 13
+3. **Profile A** demonstrates immediate Algorithm 13 verification without waiting for infrastructure adoption
+4. **Profile B** provides complete ENS-compatible verification once Algorithm 13 adoption increases
 
-**Profile A Implementation:**
-- Trust Anchor: `eketc.co` KSK (flags=257, keyTag=2371, Algorithm 13)
-- DNS Name: `_ens.eketc.co` → ENS Name: `dnssec.eth`
-- Verification: Complete KSK → DNSKEY RRset → ZSK → TXT record chain
-- Deployment: Sepolia testnet with working contracts
-
-This approach demonstrates the full DNSSEC Algorithm 13 verification path while providing a working example that can be extended to IANA root trust once Algorithm 13 adoption increases.
+**Implementation Status:**
+- **Profile A**: `Gasless DNSSEC Resolution/` - Sepolia testnet, working with `eketc.co`
+- **Profile B**: `Onchain DNS Import/` - Full oracle implementation with IANA root support
 
 ### 2.3. DNS Record Types & Usage
 
@@ -71,46 +91,80 @@ DNSSEC P-256 verification requires both P-256 precompile and SHA-256 hashing. Th
 
 #### 2.4.1. Architecture Overview
 
-DNSSEC verification can be deployed across different layers with varying cost profiles:
+Three distinct architectures are demonstrated, each with different deployment patterns:
 
-| Deployment Location | Component | Purpose |
-|---------------------|-----------|---------|
-| **Ethereum L1** | DnssecP256Verifier | Cost-effective cryptographic verification (EIP-7951) |
-| **Namechain (ENS L2)** | DnssecP256Verifier | Cost-effective cryptographic verification (EIP-7951) |
-| **Namechain (ENS L2)** | DnssecResolver | Cost-effective resolver operations |
+**1. Gasless DNSSEC Resolution (Profile A - CCIP-Read)**
+- **Resolver Contract**: Deploys on L1 or Namechain
+- **Gateway Server**: Off-chain Node.js server for proof fetching
+- **Trust Anchor**: Pinned zone KSK stored in resolver contract
+- **Gas Model**: Users pay no gas; gateway pays for verification
+
+**2. Onchain DNS Import (Profile B - Oracle)**
+- **Oracle Contract**: Deploys on L1 or Namechain (recommended: Namechain)
+- **Trust Anchors**: IANA root zone DNSKEY records stored in oracle
+- **Gas Model**: Users submit proofs and pay gas for verification
+- **Storage**: Verified DNS records stored on-chain permanently
+
+**3. DNS Claiming (Profile B - Registrar)**
+- **Registrar Contract**: Deploys on L1 or Namechain
+- **Dependency**: Uses Onchain DNS Import's oracle for verification
+- **Integration**: Claims DNS names on ENS registry
+- **Gas Model**: Users pay gas for claiming operations
 
 <Note>
-**Deployment Recommendation**: While the DnssecP256Verifier can be deployed on either L1 or Namechain, **Namechain deployment is strongly recommended** to avoid expensive cross-chain calls when resolvers need cryptographic verification. This enables seamless L2-to-L2 verification flows without L1 bridging overhead.
+**Deployment Recommendation**: For Profile B implementations, **Namechain deployment is strongly recommended** to avoid expensive cross-chain calls. This enables seamless L2-to-L2 verification flows without L1 bridging overhead, achieving 98-99% gas cost reduction.
 </Note>
 
-#### 2.4.2. Sepolia Testnet Deployment (Working Implementation)
+#### 2.4.2. Sepolia Testnet Deployments
 
-Our working implementation is deployed on Sepolia testnet:
+**Profile A Implementation (Gasless DNSSEC Resolution):**
 
 | Contract | Address | Purpose |
 |----------|---------|---------|
-| **DnssecP256Verifier** | `0x580F2Db4Da8E6D5c654aa604182D0dFD17D5766B` | Trust anchor storage and DNSSEC verification |
+| **DnssecP256Verifier** | `0x580F2Db4Da8E6D5c654aa604182D0dFD17D5766B` | Trust anchor storage (pinned KSK) and DNSSEC verification |
 | **DnssecResolver** | `0x7233d88AF9ee1eC3833F6AF4f733c1C5c0587Da2` | CCIP-Read resolver for DNSSEC-backed names |
-
-**EIP-7951 Precompile**: Confirmed available at `0x0100` on Sepolia
 
 **Working Example:**
 - DNS Name: `_ens.eketc.co` (TXT record: `"ens_name=dnssec.eth"`)
 - ENS Name: `dnssec.eth` (Sepolia)
-- Trust Anchor: `eketc.co` KSK (keyTag=2371, Algorithm 13)
+- Trust Anchor: `eketc.co` KSK (keyTag=2371, Algorithm 13) - Profile A pinned anchor
 - Gateway: `https://gateway.eketc.co/ccip-read`
 
-#### 2.4.2. Contract Inventory (2-Contract Pattern)
+**Profile B Implementation (Onchain DNS Import):**
 
-DNSSEC onchain resolution follows a minimal 2-contract pattern that separates cryptographic verification from resolution logic. The Universal Resolver serves as the existing resolution entry point, while two new contracts handle DNSSEC-specific functionality: one for cryptographic verification and another for CCIP-Read integration.
+| Contract | Purpose |
+|----------|---------|
+| **DNSSECOracle** | Full IANA root DS chain verification oracle |
+| **Algorithm Contracts** | P-256 (EIP-7951) and RSA signature verification |
 
-**Contract Inventory:**
+**Note**: Profile B deployments are demonstrated in the `Onchain DNS Import/` project. See project README for deployment addresses and examples.
 
-1. **Universal Resolver (L1/L2)** - Existing resolution entry point (optional but recommended)
-2. **DnssecP256Verifier** - Trust anchor holder and cryptographic verifier using P-256 precompile
-3. **DnssecResolver** - CCIP-Read resolver for DNSSEC-backed DNS names with offchain proof fetching
+**EIP-7951 Precompile**: Confirmed available at `0x0100` on Sepolia
 
-#### 2.4.3. Roots of Trust & Security
+#### 2.4.3. Contract Inventory
+
+Three distinct contract patterns are demonstrated:
+
+**Pattern 1: CCIP-Read Resolver (Profile A - Gasless DNSSEC Resolution)**
+- **DnssecP256Verifier** - Trust anchor holder (pinned KSK) and cryptographic verifier using P-256 precompile
+- **DnssecResolver** - CCIP-Read resolver for DNSSEC-backed DNS names with offchain proof fetching
+- **Gateway Server** - Off-chain Node.js server that fetches DNSSEC proofs and serves via CCIP-Read
+
+**Pattern 2: Oracle-Based (Profile B - Onchain DNS Import)**
+- **DNSSECOracle** - Full DNSSEC oracle with IANA root trust anchors, stores verified DNS records on-chain
+- **Algorithm Contracts** - P-256 (EIP-7951 precompile) and RSA signature verification implementations
+- **No Gateway Required** - Users submit proofs directly to oracle contract
+
+**Pattern 3: Registrar-Based (Profile B - DNS Claiming)**
+- **DNSRegistrar** - ENS registrar for claiming DNS names using DNSSEC proofs
+- **DNSClaimChecker** - Library for parsing `_ens` TXT records to extract owner addresses
+- **Dependency**: Uses Onchain DNS Import's DNSSECOracle for proof verification
+
+**Common Infrastructure:**
+- **Universal Resolver (L1/L2)** - Existing resolution entry point (optional but recommended)
+- **EIP-7951 P-256 Precompile** - Shared cryptographic primitive at `0x0100` for all patterns
+
+#### 2.4.4. Roots of Trust & Security
 
 The canonical root of trust consists of:
 - **DNS Root Zone KSK** - Stored in DnssecP256Verifier contract as trust anchors
@@ -119,7 +173,7 @@ The canonical root of trust consists of:
 
 Security is inherited from DNSSEC's cryptographic signatures and Ethereum consensus. DNS records are valid only if the complete DNSSEC chain validates onchain.
 
-#### 2.4.4. Benefits & Tradeoffs
+#### 2.4.5. Benefits & Tradeoffs
 
 This architecture enables:
 - **Trustlessness**: Cryptographic proof of DNS record authenticity
@@ -127,7 +181,7 @@ This architecture enables:
 - **Scalability**: SHA-256 hashing and P-256 verification optimized for onchain execution
 - **DNSSEC Integration**: DNS zones become first-class ENS resolution sources
 
-#### 2.4.5. Governance Requirements
+#### 2.4.6. Governance Requirements
 
 
 While not strictly required for basic resolver operation, a production-ready DNSSEC resolver should go through ENS DAO governance for integration into core ENS infrastructure. DAO approval is required if you want your resolver to be:
@@ -146,9 +200,19 @@ DAO approval is a matter of governance and trust. If you want your resolver to b
 
 ### 3.1. Roots of Trust
 
-The canonical root of trust for DNSSEC P-256 is the DNS root zone Key Signing Key (KSK) stored in the DnssecP256Verifier contract. These trust anchors correspond to the DNS root zone's KSK managed by IANA.
+DNSSEC P-256 supports two trust model approaches:
 
-**Why stored in contract?** This solves the "bootstrap problem" - to verify DNSSEC, we need root keys, but fetching them requires verification (infinite regress). Onchain storage establishes a fixed trust anchor.
+**Profile A (Pinned Zone KSK)** - Used by Gasless DNSSEC Resolution:
+- **Trust Anchor**: Pinned zone-level KSK stored in the verifier contract
+- **Example**: `eketc.co` KSK (keyTag=2371, Algorithm 13) serves as the trust anchor
+- **Why stored in contract?** Solves the "bootstrap problem" - establishes a fixed trust anchor without requiring root zone verification
+- **Advantage**: Immediate deployment without dependency on root/TLD Algorithm 13 adoption
+
+**Profile B (IANA Root DS Chain)** - Used by Onchain DNS Import and DNS Claiming:
+- **Trust Anchor**: IANA root zone Key Signing Key (KSK) stored in the oracle contract
+- **Chain Validation**: Complete DS chain from root → TLD → SLD → zone
+- **Why stored in contract?** Solves the "bootstrap problem" - to verify DNSSEC, we need root keys, but fetching them requires verification (infinite regress). Onchain storage establishes a fixed trust anchor.
+- **Advantage**: Complete trust chain validation, ENS-compatible approach
 
 ### 3.2. DNSSEC Chain of Trust
 
@@ -393,16 +457,26 @@ To establish **verified DNS records** for ENS resolution using Algorithm 13:
 - **Remove:** Zone owner removes records or disables DNSSEC. Resolution fails verification.
 - **Expiry:** RRSIG signatures expire. Zone operators must re-sign before expiry.
 
-### 5.2. DNSSEC Algorithm 13-Specific Rules
+### 5.2. Profile A: Algorithm 13-Specific Rules (Gasless DNSSEC Resolution)
 
 - **Algorithm exclusivity:** Only Algorithm 13 (ECDSA-P256-SHA256) supported; all other algorithms rejected
 - **DNSKEY requirements:** DNSKEY records must specify algorithm 13 and contain P-256 public keys
-- **DS requirements:** DS records must reference algorithm 13 keys and use valid digest algorithms (SHA-256 preferred)
 - **RRSIG requirements:** RRSIG records must use algorithm 13 and cover RRsets with valid P-256 signatures
 - **Signature validity windows:** RRSIG(13) signatures must be valid at verification time (inception ≤ now ≤ expiration)
 - **Key rollover handling:** Zone operators can rollover DNSKEY(13) following DNSSEC procedures with proper double-signing
-- **Trust chain completeness:** Complete DNSKEY(13) + DS + RRSIG(13) delegation chain required from zone to root trust anchor
+- **Trust anchor:** Pinned zone KSK serves as trust anchor (no DS chain verification required)
 - **QNAME/QTYPE matching:** RRSIG(13) must exactly match original DNS question (QNAME and QTYPE)
+
+### 5.3. Profile B: Hybrid Algorithm Rules (Onchain DNS Import / DNS Claiming)
+
+- **Algorithm support:** Both Algorithm 8 (RSA/SHA-256) and Algorithm 13 (ECDSA-P256-SHA256) supported
+- **DNSKEY requirements:** DNSKEY records can specify algorithm 8 or 13; P-256 keys for algorithm 13, RSA keys for algorithm 8
+- **DS requirements:** DS records must reference supported algorithm keys and use valid digest algorithms (SHA-256 preferred)
+- **RRSIG requirements:** RRSIG records can use algorithm 8 or 13; signatures verified accordingly
+- **Signature validity windows:** RRSIG signatures must be valid at verification time (inception ≤ now ≤ expiration)
+- **Key rollover handling:** Zone operators can rollover DNSKEYs following DNSSEC procedures with proper double-signing
+- **Trust chain completeness:** Complete DNSKEY + DS + RRSIG delegation chain required from zone to IANA root trust anchor
+- **QNAME/QTYPE matching:** RRSIG must exactly match original DNS question (QNAME and QTYPE)
 
 ### 5.3. DNS Record Types
 
@@ -476,22 +550,37 @@ This creates a complete chain of cryptographic trust from individual DNS records
 
 ### 6.2. Resolver / Gateway Topology
 
-**Gateway Responsibilities:**
-- Fetch DNSSEC Algorithm 13 records from DNS infrastructure (DNSKEY(13), DS, RRSIG(13))
+**Gateway Responsibilities (Profile A - Gasless DNSSEC Resolution):**
+- Fetch DNSSEC Algorithm 13 records from DNS infrastructure (DNSKEY(13), RRSIG(13))
 - **Canonicalize RRsets offchain** using RFC 4034 Section 6.1 (DNS name canonicalization) and Section 6.2 (RRset canonical ordering) for gas optimization
-- Build ProofBundle with complete Algorithm 13 trust chain
+- Build ProofBundle with zone DNSKEY(13) chain (pinned KSK trust anchor)
 - Ensure all signatures use Algorithm 13 and all keys specify algorithm 13
 - Return proof bundles via CCIP-Read
 
-**Verifier Responsibilities:**
-- Validate root DNSKEY(13) matches stored trust anchors
-- Verify complete DNSKEY(13) + DS + RRSIG(13) delegation chain from zone to root
-- Validate DS digests match DNSKEY(13) records
+**Verifier Responsibilities (Profile A - Gasless DNSSEC Resolution):**
+- Validate pinned zone KSK matches stored trust anchor (Algorithm 13)
+- Verify KSK → DNSKEY RRset signature (Algorithm 13)
+- Verify ZSK → answer RRset signature (Algorithm 13)
 - Validate RRSIG(13) signatures using P-256 precompile (EIP-7951)
 - Check Algorithm 13 signature validity windows and QNAME/QTYPE matching
 - Reject any non-Algorithm 13 signatures or keys
 
-**Resolver Responsibilities:**
+**Oracle Responsibilities (Profile B - Onchain DNS Import):**
+- Validate IANA root zone DNSKEY matches stored trust anchors (Algorithm 8 or 13)
+- Verify complete DNSKEY + DS + RRSIG delegation chain from root → TLD → SLD → zone
+- Validate DS digests match DNSKEY records at each level
+- Validate RRSIG signatures using P-256 precompile (EIP-7951) for Algorithm 13 or RSA verification for Algorithm 8
+- Store verified DNS records on-chain permanently
+- Support both Algorithm 8 (RSA) and Algorithm 13 (P-256) verification
+
+**Registrar Responsibilities (Profile B - DNS Claiming):**
+- Accept DNSSEC proofs for DNS name claiming
+- Call Onchain DNS Import's DNSSECOracle for proof verification
+- Parse `_ens.<domain>` TXT records to extract owner address
+- Claim DNS names on ENS registry via setSubnodeOwner()
+- Set default resolver and address records
+
+**Resolver Responsibilities (Profile A - Gasless DNSSEC Resolution):**
 - Detect DNS names requiring offchain resolution
 - Trigger CCIP-Read via OffchainLookup
 - Receive proof bundles and call verifier
@@ -558,39 +647,70 @@ ENSIP-10 wildcard resolver implementing EIP-3668 (CCIP-Read) for DNSSEC-backed D
 
 Cryptographic verifier for DNSSEC P-256 proofs. Holds DNS root zone KSK trust anchors, validates complete DNSSEC chain of trust from root to answer records, and verifies RRSIG signatures using P-256 precompile.
 
-### 7.4. Implementation Requirements (2-Contract Pattern)
+### 7.4. Implementation Requirements
 
-DNSSEC onchain resolution requires deploying two new contracts while leveraging existing ENS infrastructure. The Universal Resolver serves as the resolution entry point, while dedicated contracts handle DNSSEC-specific verification and CCIP-Read integration.
+Three distinct implementation patterns are demonstrated, each with different contract requirements:
 
-#### 7.4.1. Implementation Components
+#### 7.4.1. Pattern 1: CCIP-Read Resolver (Profile A - Gasless DNSSEC Resolution)
 
-1. **UniversalResolver** - Existing ENS infrastructure (no deployment needed) that routes resolution requests to appropriate resolvers based on name patterns
-2. **DnssecP256Verifier** - New contract that holds DNSSEC trust anchors and performs cryptographic verification using the P-256 precompile (EIP-7951)
-3. **DnssecResolver** - New CCIP-Read enabled resolver that handles offchain DNSSEC proof fetching and triggers verification callbacks
-4. **Gateway Server** - Offchain service that fetches DNSSEC proofs and canonicalizes RRsets
+**Implementation Components:**
+1. **UniversalResolver** - Existing ENS infrastructure (no deployment needed)
+2. **DnssecP256Verifier** - Holds pinned zone KSK trust anchors, performs P-256 verification
+3. **DnssecResolver** - CCIP-Read enabled resolver for offchain proof fetching
+4. **Gateway Server** - Offchain Node.js service that fetches DNSSEC proofs and canonicalizes RRsets
 
-#### 7.4.2. Sepolia Testnet Deployment (Working Implementation)
-
-**Contract Addresses:**
+**Sepolia Deployment:**
 - **DnssecP256Verifier**: `0x580F2Db4Da8E6D5c654aa604182D0dFD17D5766B`
 - **DnssecResolver**: `0x7233d88AF9ee1eC3833F6AF4f733c1C5c0587Da2`
+- **Gateway**: `https://gateway.eketc.co/ccip-read`
 
 **Working Example:**
 - DNS Name: `_ens.eketc.co` → ENS Name: `dnssec.eth`
-- Trust Anchor: `eketc.co` KSK (keyTag=2371, Algorithm 13)
-- Gateway: `https://gateway.eketc.co/ccip-read`
+- Trust Anchor: `eketc.co` KSK (keyTag=2371, Algorithm 13) - Profile A
 
 **Gas Costs (Sepolia):**
 - DNSSEC Verification: ~311,588 gas (&lt; $0.01)
 - DNS-Verified Read: ~313,613 gas (&lt; $0.01)
-- On-chain Read: ~3,124 gas (negligible)
-- Write Operations: 50,959-75,227 gas (~$0.0002-0.0003)
+- User Gas Cost: **$0** (gateway pays)
 
-#### 7.4.3. Mainnet Deployment Estimates
+#### 7.4.2. Pattern 2: Oracle-Based (Profile B - Onchain DNS Import)
 
-4. **L1 Deployment** - Both new contracts deployed on Ethereum mainnet (~$9-30 per verification at 30-100 gwei)
-5. **Hybrid Deployment** - Verifier contract on L1 for security, resolver on Namechain for cost efficiency (~$9-30 per verification)
-6. **Namechain Deployment** - Both contracts on Namechain with EIP-7951 support (**recommended for cost efficiency**, 98-99% cost reduction, ~$0.09-0.30 per verification)
+**Implementation Components:**
+1. **DNSSECOracle** - Full DNSSEC oracle with IANA root trust anchors
+2. **Algorithm Contracts** - P-256 (EIP-7951) and RSA verification implementations
+3. **No Gateway Required** - Users submit proofs directly to oracle
+
+**Deployment:** See `Onchain DNS Import/` project README for deployment addresses
+
+**Gas Costs:**
+- Oracle Verification: ~94% savings for Algorithm 13 domains vs. Solidity
+- User pays gas for proof submission and storage
+
+#### 7.4.3. Pattern 3: Registrar-Based (Profile B - DNS Claiming)
+
+**Implementation Components:**
+1. **DNSRegistrar** - ENS registrar for claiming DNS names
+2. **DNSClaimChecker** - Library for parsing `_ens` TXT records
+3. **Dependency** - Uses Onchain DNS Import's DNSSECOracle for verification
+
+**Deployment:** See `dns-claiming/` project README for deployment instructions
+
+**Gas Costs:**
+- Claiming operation: User pays gas for registrar transaction
+- Verification handled by Onchain DNS Import oracle
+
+#### 7.4.4. Mainnet Deployment Recommendations
+
+**L1 Deployment:**
+- Profile A: ~$9-30 per verification at 30-100 gwei (gateway pays)
+- Profile B: ~$9-30 per verification at 30-100 gwei (user pays)
+
+**Namechain Deployment (Recommended):**
+- **98-99% cost reduction** compared to L1
+- Profile A: ~$0.09-0.30 per verification (gateway pays)
+- Profile B: ~$0.09-0.30 per verification (user pays)
+- EIP-7951 precompile available on Namechain
+- Seamless L2-to-L2 verification flows without L1 bridging
 
 ## 8. Gas Benchmarks
 
@@ -703,7 +823,8 @@ dnssec.eth ENS name
 
 **Command-line testing:**
 ```bash
-# Test DNS-verified read
+# Test DNS-verified read (Gasless DNSSEC Resolution)
+cd "Gasless DNSSEC Resolution"
 node scripts/test-dns-read.mjs
 
 # Test via ENS app
@@ -712,35 +833,65 @@ node scripts/test-dns-read.mjs
 
 **Gas measurements:**
 - Full DNS-verified resolution: ~313,613 gas
-- Cost on Sepolia: &lt;$0.01
-- Cost on mainnet: ~$9-30
+- Cost on Sepolia: &lt;$0.01 (gateway pays)
+- Cost on mainnet: ~$9-30 (gateway pays)
+
+### 9.7. Profile B Example: Onchain DNS Import Oracle
+
+The **Onchain DNS Import** project demonstrates full IANA root DS chain verification with complete oracle functionality. See `Onchain DNS Import/README.md` for:
+
+- Oracle deployment instructions
+- Trust anchor configuration (IANA root zone keys)
+- DNSSEC proof submission examples
+- Gas benchmarks showing ~94% savings for Algorithm 13 domains
+
+### 9.8. Profile B Example: DNS Claiming with ENS Registrar
+
+The **DNS Claiming** project demonstrates claiming DNS names on ENS using DNSSEC proofs. See `dns-claiming/README.md` for:
+
+- DNSRegistrar deployment instructions
+- Name claiming workflow
+- Integration with Onchain DNS Import oracle
+- Limitations (works only for TLDs with ENS registrar permissions)
+
+**Note:** DNS Claiming is separated from Onchain DNS Import because it requires ENS registry permissions that may not be available for all TLDs (e.g., you cannot claim `.co` domains on ENS).
 
 ## 10. URM Mapping (Resolver Profiles)
 
-DNSSEC P-256 defines a single resolver profile for DNSSEC-backed resolution.
+DNSSEC P-256 defines two resolver profiles for DNSSEC-backed resolution, corresponding to the two trust models demonstrated:
 
 | Profile | Scope | Trust Model | Proof System | Rules | Verification Path |
 |---------|-------|-------------|--------------|-------|-------------------|
-| **dnssec-p256** | DNS zones with Algorithm 13 signatures | Profile A - pinned zone KSK trust anchor | `dnssec_proof(algorithm_13)` via CCIP-Read | Algorithm 13 exclusivity, signature validity windows | OffchainLookup → Gateway → Onchain KSK→DNSKEY→ZSK→RRset validation → ENS resolution |
+| **dnssec-p256-profile-a** | DNS zones with Algorithm 13 signatures | Profile A - pinned zone KSK trust anchor | `dnssec_proof(algorithm_13)` via CCIP-Read | Algorithm 13 exclusivity, signature validity windows | OffchainLookup → Gateway → Onchain KSK→DNSKEY→ZSK→RRset validation → ENS resolution |
+| **dnssec-p256-profile-b** | DNS zones with Algorithm 13 signatures | Profile B - IANA root DS chain | `dnssec_proof(algorithm_13)` via oracle submission | Algorithm 13 (or hybrid 8+13), full DS chain validation | User submission → Oracle → Root→TLD→SLD→Zone DS chain validation → On-chain storage |
 
-**Key Characteristics:**
+**Profile A Key Characteristics:**
 - **Algorithm**: Exclusive support for DNSSEC Algorithm 13 (ECDSA-P256-SHA256)
-- **Working Implementation**: `eketc.co` zone with pinned KSK trust anchor
+- **Working Implementation**: `Gasless DNSSEC Resolution/` - `eketc.co` zone with pinned KSK trust anchor
 - **Security**: Cryptographic proof anchored in zone KSK (Profile A)
 - **Deployment**: Sepolia testnet with EIP-7951 precompile
+- **Gas Model**: Users pay no gas; gateway pays for verification
 
-## 9. Edge Cases & Client Requirements
+**Profile B Key Characteristics:**
+- **Algorithm**: Support for Algorithm 8 (RSA) and Algorithm 13 (ECDSA-P256-SHA256)
+- **Working Implementation**: `Onchain DNS Import/` - Full IANA root DS chain oracle
+- **Security**: Cryptographic proof anchored in IANA root zone (Profile B)
+- **Deployment**: Sepolia testnet with EIP-7951 precompile
+- **Gas Model**: Users pay gas for proof submission and on-chain storage
+- **ENS Compatibility**: Matches ENS's DNSSEC oracle approach
 
-### 9.1. Algorithm 13 Exclusivity
-ENS only supports DNSSEC Algorithm 13. RRSIGs with other algorithms (RSA, Ed25519, etc.) are rejected. DNSKEY records must specify algorithm 13, DS records must reference algorithm 13 keys.
+## 11. Edge Cases & Client Requirements
 
-### 9.2. Signature Expiry
+### 11.1. Algorithm 13 Exclusivity
+Profile A (Gasless DNSSEC Resolution) exclusively supports DNSSEC Algorithm 13. Profile B (Onchain DNS Import) supports both Algorithm 8 (RSA) and Algorithm 13 (P-256) for hybrid verification. RRSIGs with unsupported algorithms are rejected. DNSKEY records must specify supported algorithms, DS records must reference supported algorithm keys.
+
+### 11.2. Signature Expiry
 RRSIG signatures have inception/expiration timestamps. Expired signatures are rejected with no grace periods. Zone operators must re-sign records before expiry.
 
-### 9.3. DNSSEC Failures
-Non-Algorithm 13 zones and unsigned zones cannot be verified. Verification failures can occur at multiple points—clients must handle failures gracefully and not accept invalid results.
+### 11.3. DNSSEC Failures
+Unsigned zones and zones with unsupported algorithms cannot be verified. Verification failures can occur at multiple points—clients must handle failures gracefully and not accept invalid results.
 
-### 9.4. Client Requirements
+### 11.4. Client Requirements
 
 Clients **must**:
 - Handle OffchainLookup errors correctly and fetch proof bundles from gateways
@@ -940,13 +1091,25 @@ verifier.setPinnedTrustAnchor(
 );
 ```
 
-### B.4 Why Profile A over IANA Root Trust
+### B.4 Profile B: IANA Root DS Chain Trust Anchors
+
+**Trust Model:** **Profile B (IANA root DS chain trust model)** is used by the **Onchain DNS Import** and **DNS Claiming** projects. This approach provides:
+
+1. **Complete Trust Chain**: Full DS chain validation from IANA root zone to target domain
+2. **ENS Compatibility**: Matches ENS's DNSSEC oracle approach for maximum compatibility
+3. **Maximum Security**: Complete trust chain validation provides strongest security guarantees
+4. **Hybrid Support**: Supports both Algorithm 8 (RSA) and Algorithm 13 (P-256) for root/TLD zones
+5. **On-chain Storage**: Stores verified DNS records on-chain permanently
+
+**Implementation:** `Onchain DNS Import/contracts/DNSSECOracle.sol`
+
+### B.5 Why Both Profile A and Profile B
 
 1. **Algorithm Adoption**: DNS root and most TLDs use RSA (Algorithm 8), not P-256 (Algorithm 13)
-2. **Proof-of-Concept**: Profile A demonstrates complete Algorithm 13 verification without external dependencies
-3. **Deployment Timeline**: No need to wait for DNS infrastructure to adopt Algorithm 13
-4. **Security**: Equivalent cryptographic security to IANA root trust when properly implemented
-5. **Extensibility**: Can be extended to support IANA root trust once Algorithm 13 adoption increases
+2. **Profile A Benefits**: Immediate deployment, gasless resolution, proof-of-concept demonstration
+3. **Profile B Benefits**: Complete trust chain, ENS compatibility, maximum security
+4. **Deployment Flexibility**: Different use cases benefit from different trust models
+5. **Future-Proof**: Profile B can fully support IANA root trust once Algorithm 13 adoption increases
 
 ### B.5 Future: IANA Root Trust Support
 
