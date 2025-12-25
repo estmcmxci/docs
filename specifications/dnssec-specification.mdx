@@ -6,18 +6,18 @@ icon: "shield-check"
 
 
 <Note type="info">
-**Working Implementation**: This document describes three complementary DNSSEC P-256 demonstration projects deployed on Sepolia, all leveraging the EIP-7951 P-256 precompile. Working implementations are available in the [`dnssec-solutions`](../../dnssec-solutions) repository.
+**Working Implementation**: This document describes three complementary DNSSEC P-256 demonstration projects deployed on Sepolia, all leveraging the EIP-7951 P-256 precompile. Working implementations are available in the [`dnssec-solutions`](https://github.com/eurekaetcetera/dnssec-solutions) repository.
 </Note>
 
 ## 1. Introduction
 
 ### 1.1. Document Purpose
 
-This document provides a comprehensive technical reference for implementing DNSSEC P-256 (Algorithm 13) as a profile in the Universal Resolver Matrix (URM), expanding the normative specification from the proposed **ENSIP-XX** (Ethereum Name Service Improvement Proposal for standardizing DNSSEC onchain resolution).
+This document provides a comprehensive technical reference for implementing DNSSEC P-256 (Algorithm 13) as a profile in the Universal Resolver Matrix (URM), serving as a technical specification for DNSSEC onchain resolution.
 
 ### 1.2. Demonstration Projects
 
-This specification is supported by three demonstration projects in the [`dnssec-solutions`](../../dnssec-solutions) repository that showcase different approaches to DNSSEC verification:
+This specification is supported by three demonstration projects in the [`dnssec-solutions`](https://github.com/eurekaetcetera/dnssec-solutions) repository that showcase different approaches to DNSSEC verification:
 
 1. **Gasless DNSSEC Resolution** - CCIP-Read (EIP-3668) implementation with Profile A trust model (pinned zone KSK)
 2. **Onchain DNS Import** - ENS-style DNSSEC oracle with Profile B trust model (IANA root DS chain)
@@ -639,9 +639,9 @@ async function verifyDnssecRecord(
 
 ### 7.3. Resolver Types
 
-#### 7.3.1. DnssecResolver (ENSIP-10 Extended Resolver)
+#### 7.3.1. DnssecResolver (Extended Resolver)
 
-ENSIP-10 wildcard resolver implementing EIP-3668 (CCIP-Read) for DNSSEC-backed DNS names. Handles offchain lookup triggers, receives proof bundles, calls verifier for validation, and translates DNS records into ENS resolution results.
+Wildcard resolver implementing EIP-3668 (CCIP-Read) for DNSSEC-backed DNS names. Handles offchain lookup triggers, receives proof bundles, calls verifier for validation, and translates DNS records into ENS resolution results. Compatible with ENSIP-10 extended resolver interface patterns.
 
 #### 7.3.2. DnssecP256Verifier (Trust Anchor Holder)
 
@@ -934,6 +934,9 @@ Clients **must not**:
 **Ethereum Network:**
 - **Fusaka Upgrade** — Ethereum network upgrade including P-256 precompile
 - **Namechain** — ENS Layer 2 solution (EIP-7951 available)
+
+**Implementation Repository:**
+- **[dnssec-solutions](https://github.com/eurekaetcetera/dnssec-solutions)** — GitHub repository containing all three demonstration projects (Gasless DNSSEC Resolution, Onchain DNS Import, DNS Claiming)
 
 ---
 
